@@ -15,6 +15,8 @@ var supportedMimes = [
   'image/tiff'
 ];
 
+var rbasepath = /(.+?)\?(.*)/;
+
 var _tempCache = [];
 
 var send = function send(res, path, cb) {
@@ -50,7 +52,9 @@ module.exports = function(basePath, options) {
    * handles each request and sends a webp image format if the client supports it
    */
   return function webpMiddleware(req, res, next) {
-    var mimeType = mime.getType(req.originalUrl);
+    const normalizedOriginalUrl = req.originalUrl.replace(rbasepath, '$1');
+    
+    var mimeType = mime.getType(normalizedOriginalUrl);
     var pathOptions = [];
     var accept = req.headers.accept;
 
@@ -63,9 +67,9 @@ module.exports = function(basePath, options) {
       return;
     }
 
-    var hash = crypto.createHash('md5').update(req.originalUrl).digest('hex');
+    var hash = crypto.createHash('md5').update(normalizedOriginalUrl).digest('hex');
     var cachePath = path.join(cacheDir, hash + '.webp');
-    var imgPath = path.join(basePath, req.originalUrl);
+    var imgPath = path.join(basePath, normalizedOriginalUrl);
 
     // try lookup cache for fast access
     if (_tempCache.indexOf(cachePath) !== -1) {
